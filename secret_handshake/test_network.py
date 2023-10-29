@@ -29,6 +29,7 @@ from secret_handshake.util import AsyncBuffer
 
 class DummyCrypto(object):
     """Dummy crypto module, pretends everything is fine."""
+
     def verify_server_challenge(self, data):
         return True
 
@@ -39,23 +40,23 @@ class DummyCrypto(object):
         return True
 
     def generate_challenge(self):
-        return b'CHALLENGE'
+        return b"CHALLENGE"
 
     def generate_client_auth(self):
-        return b'AUTH'
+        return b"AUTH"
 
     def verify_client_auth(self, data):
         return True
 
     def generate_accept(self):
-        return b'ACCEPT'
+        return b"ACCEPT"
 
     def get_box_keys(self):
         return {
-            'encrypt_key': b'x' * 32,
-            'encrypt_nonce': b'x' * 32,
-            'decrypt_key': b'x' * 32,
-            'decrypt_nonce': b'x' * 32
+            "encrypt_key": b"x" * 32,
+            "encrypt_nonce": b"x" * 32,
+            "decrypt_key": b"x" * 32,
+            "decrypt_nonce": b"x" * 32,
         }
 
     def clean(self):
@@ -68,8 +69,8 @@ def _dummy_boxstream(stream, **kwargs):
 
 
 def _client_stream_mocker():
-    reader = AsyncBuffer(b'xxx')
-    writer = AsyncBuffer(b'xxx')
+    reader = AsyncBuffer(b"xxx")
+    writer = AsyncBuffer(b"xxx")
 
     async def _create_mock_streams(host, port):
         return reader, writer
@@ -78,8 +79,8 @@ def _client_stream_mocker():
 
 
 def _server_stream_mocker():
-    reader = AsyncBuffer(b'xxx')
-    writer = AsyncBuffer(b'xxx')
+    reader = AsyncBuffer(b"xxx")
+    writer = AsyncBuffer(b"xxx")
 
     async def _create_mock_server(cb, host, port):
         await cb(reader, writer)
@@ -90,18 +91,18 @@ def _server_stream_mocker():
 @pytest.mark.asyncio
 async def test_client(mocker):
     reader, writer, _create_mock_streams = _client_stream_mocker()
-    mocker.patch('asyncio.open_connection', new=_create_mock_streams)
-    mocker.patch('secret_handshake.boxstream.BoxStream', new=_dummy_boxstream)
-    mocker.patch('secret_handshake.boxstream.UnboxStream', new=_dummy_boxstream)
+    mocker.patch("asyncio.open_connection", new=_create_mock_streams)
+    mocker.patch("secret_handshake.boxstream.BoxStream", new=_dummy_boxstream)
+    mocker.patch("secret_handshake.boxstream.UnboxStream", new=_dummy_boxstream)
 
     from secret_handshake import SHSClient
 
-    client = SHSClient('shop.local', 1111, SigningKey.generate(), os.urandom(32))
+    client = SHSClient("shop.local", 1111, SigningKey.generate(), os.urandom(32))
     client.crypto = DummyCrypto()
 
     await client.open()
-    reader.append(b'TEST')
-    assert (await client.read()) == b'TEST'
+    reader.append(b"TEST")
+    assert (await client.read()) == b"TEST"
     client.disconnect()
 
 
@@ -116,11 +117,11 @@ async def test_server(mocker):
         resolve.set()
 
     reader, writer, _create_mock_server = _server_stream_mocker()
-    mocker.patch('asyncio.start_server', new=_create_mock_server)
-    mocker.patch('secret_handshake.boxstream.BoxStream', new=_dummy_boxstream)
-    mocker.patch('secret_handshake.boxstream.UnboxStream', new=_dummy_boxstream)
+    mocker.patch("asyncio.start_server", new=_create_mock_server)
+    mocker.patch("secret_handshake.boxstream.BoxStream", new=_dummy_boxstream)
+    mocker.patch("secret_handshake.boxstream.UnboxStream", new=_dummy_boxstream)
 
-    server = SHSServer('shop.local', 1111, SigningKey.generate(), os.urandom(32))
+    server = SHSServer("shop.local", 1111, SigningKey.generate(), os.urandom(32))
     server.crypto = DummyCrypto()
 
     server.on_connect(_on_connect)

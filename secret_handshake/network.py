@@ -77,13 +77,13 @@ class SHSServer(SHSEndpoint):
     async def _handshake(self, reader, writer):
         data = await reader.readexactly(64)
         if not self.crypto.verify_challenge(data):
-            raise SHSClientException('Client challenge is not valid')
+            raise SHSClientException("Client challenge is not valid")
 
         writer.write(self.crypto.generate_challenge())
 
         data = await reader.readexactly(112)
         if not self.crypto.verify_client_auth(data):
-            raise SHSClientException('Client auth is not valid')
+            raise SHSClientException("Client auth is not valid")
 
         writer.write(self.crypto.generate_accept())
 
@@ -125,21 +125,22 @@ class SHSClient(SHSDuplexStream, SHSEndpoint):
         SHSEndpoint.__init__(self)
         self.host = host
         self.port = port
-        self.crypto = SHSClientCrypto(client_kp, server_pub_key, ephemeral_key=ephemeral_key,
-                                      application_key=application_key)
+        self.crypto = SHSClientCrypto(
+            client_kp, server_pub_key, ephemeral_key=ephemeral_key, application_key=application_key
+        )
 
     async def _handshake(self, reader, writer):
         writer.write(self.crypto.generate_challenge())
 
         data = await reader.readexactly(64)
         if not self.crypto.verify_server_challenge(data):
-            raise SHSClientException('Server challenge is not valid')
+            raise SHSClientException("Server challenge is not valid")
 
         writer.write(self.crypto.generate_client_auth())
 
         data = await reader.readexactly(80)
         if not self.crypto.verify_server_accept(data):
-            raise SHSClientException('Server accept is not valid')
+            raise SHSClientException("Server accept is not valid")
 
     async def open(self):
         reader, writer = await asyncio.open_connection(self.host, self.port)

@@ -1,3 +1,5 @@
+"""Example SHS server"""
+
 import os
 from asyncio import get_event_loop
 from base64 import b64decode
@@ -7,7 +9,7 @@ from nacl.signing import SigningKey
 
 from secret_handshake import SHSServer
 
-with open(os.path.expanduser("~/.ssb/secret")) as f:
+with open(os.path.expanduser("~/.ssb/secret"), encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
 
@@ -17,6 +19,8 @@ async def _on_connect(conn):
 
 
 async def main():
+    """Main function to run"""
+
     server_keypair = SigningKey(b64decode(config["private"][:-8])[:32])
     server = SHSServer("localhost", 8008, server_keypair)
     server.on_connect(_on_connect)

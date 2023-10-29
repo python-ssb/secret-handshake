@@ -18,40 +18,59 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""Tests for the networking components"""
+
 import os
 from asyncio import Event, wait_for
 
 import pytest
 from nacl.signing import SigningKey
 
+from secret_handshake import SHSClient, SHSServer
+
 from .helpers import AsyncBuffer
 
 
-class DummyCrypto(object):
+class DummyCrypto:
     """Dummy crypto module, pretends everything is fine."""
 
-    def verify_server_challenge(self, data):
+    def verify_server_challenge(self, _):
+        """Verify the server challenge"""
+
         return True
 
-    def verify_challenge(self, data):
+    def verify_challenge(self, _):
+        """Verify the challenge data"""
+
         return True
 
-    def verify_server_accept(self, data):
+    def verify_server_accept(self, _):
+        """Verify server’s accept message"""
         return True
 
     def generate_challenge(self):
+        """Generate authentication challenge"""
+
         return b"CHALLENGE"
 
     def generate_client_auth(self):
+        """Generate client authentication data"""
+
         return b"AUTH"
 
-    def verify_client_auth(self, data):
+    def verify_client_auth(self, _):
+        """Verify client authentication data"""
+
         return True
 
     def generate_accept(self):
+        """Generate an ACCEPT message"""
+
         return b"ACCEPT"
 
     def get_box_keys(self):
+        """Get box keys"""
+
         return {
             "encrypt_key": b"x" * 32,
             "encrypt_nonce": b"x" * 32,
@@ -60,10 +79,10 @@ class DummyCrypto(object):
         }
 
     def clean(self):
-        return
+        """Clean up internal data"""
 
 
-def _dummy_boxstream(stream, **kwargs):
+def _dummy_boxstream(stream, **_):
     """Identity boxstream, no tansformation."""
     return stream
 
@@ -72,7 +91,7 @@ def _client_stream_mocker():
     reader = AsyncBuffer(b"xxx")
     writer = AsyncBuffer(b"xxx")
 
-    async def _create_mock_streams(host, port):
+    async def _create_mock_streams(host, port):  # pylint: disable=unused-argument
         return reader, writer
 
     return reader, writer, _create_mock_streams
@@ -82,7 +101,7 @@ def _server_stream_mocker():
     reader = AsyncBuffer(b"xxx")
     writer = AsyncBuffer(b"xxx")
 
-    async def _create_mock_server(cb, host, port):
+    async def _create_mock_server(cb, host, port):  # pylint: disable=unused-argument
         await cb(reader, writer)
 
     return reader, writer, _create_mock_server
@@ -90,12 +109,12 @@ def _server_stream_mocker():
 
 @pytest.mark.asyncio
 async def test_client(mocker):
-    reader, writer, _create_mock_streams = _client_stream_mocker()
+    """Test the client"""
+
+    reader, _, _create_mock_streams = _client_stream_mocker()
     mocker.patch("asyncio.open_connection", new=_create_mock_streams)
     mocker.patch("secret_handshake.boxstream.BoxStream", new=_dummy_boxstream)
     mocker.patch("secret_handshake.boxstream.UnboxStream", new=_dummy_boxstream)
-
-    from secret_handshake import SHSClient
 
     client = SHSClient("shop.local", 1111, SigningKey.generate(), os.urandom(32))
     client.crypto = DummyCrypto()
@@ -108,15 +127,15 @@ async def test_client(mocker):
 
 @pytest.mark.asyncio
 async def test_server(mocker):
-    from secret_handshake import SHSServer
+    """Test the server"""
 
     resolve = Event()
 
-    async def _on_connect(conn):
+    async def _on_connect(_):
         server.disconnect()
         resolve.set()
 
-    reader, writer, _create_mock_server = _server_stream_mocker()
+    _, _, _create_mock_server = _server_stream_mocker()
     mocker.patch("asyncio.start_server", new=_create_mock_server)
     mocker.patch("secret_handshake.boxstream.BoxStream", new=_dummy_boxstream)
     mocker.patch("secret_handshake.boxstream.UnboxStream", new=_dummy_boxstream)

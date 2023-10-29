@@ -18,10 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""Cryptography functions"""
 
+from base64 import b64decode
 import hashlib
 import hmac
-from base64 import b64decode
+from typing import Optional
 
 from nacl.bindings import crypto_box_afternm, crypto_box_open_afternm, crypto_scalarmult
 from nacl.exceptions import CryptoError
@@ -34,13 +36,19 @@ APPLICATION_KEY = b64decode("1KHLiKZvAvjbY1ziZEHMXawbCEIM6qwjCDm3VYRan/s=")
 class SHSError(Exception):
     """A SHS exception."""
 
-    pass
 
+class SHSCryptoBase:  # pylint: disable=too-many-instance-attributes
+    """Base functions for SHS cryptography"""
 
-class SHSCryptoBase(object):
     def __init__(self, local_key, ephemeral_key=None, application_key=None):
         self.local_key = local_key
         self.application_key = application_key or APPLICATION_KEY
+        self.shared_hash = None
+        self.remote_ephemeral_key = None
+        self.shared_secret = None
+        self.remote_app_hmac = None
+        self.remote_pub_key = None
+        self.box_secret = None
         self._reset_keys(ephemeral_key or PrivateKey.generate())
 
     def _reset_keys(self, ephemeral_key):
@@ -71,12 +79,16 @@ class SHSCryptoBase(object):
         return ok
 
     def clean(self, new_ephemeral_key=None):
+        """Clean internal data"""
+
         self._reset_keys(new_ephemeral_key or PrivateKey.generate())
         self.shared_secret = None
         self.shared_hash = None
         self.remote_ephemeral_key = None
 
     def get_box_keys(self):
+        """Get the box stream’s keys"""
+
         shared_secret = hashlib.sha256(self.box_secret).digest()
         return {
             "shared_secret": shared_secret,
@@ -88,7 +100,18 @@ class SHSCryptoBase(object):
 
 
 class SHSServerCrypto(SHSCryptoBase):
+    """SHS server crypto algorithm"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.b_alice = None
+        self.hello = None
+        self.box_secret = None
+        self.remote_pub_key = None
+
     def verify_client_auth(self, data):
+        """Verify client authentication data"""
+
         assert len(data) == 112
         a_bob = crypto_scalarmult(bytes(self.local_key.to_curve25519_private_key()), self.remote_ephemeral_key)
         box_secret = hashlib.sha256(self.application_key + self.shared_secret + a_bob).digest()
@@ -107,12 +130,13 @@ class SHSServerCrypto(SHSCryptoBase):
         return True
 
     def generate_accept(self):
+        """Generate an accept message"""
+
         okay = self.local_key.sign(self.application_key + self.hello + self.shared_hash).signature
-        d = crypto_box_afternm(okay, b"\x00" * 24, self.box_secret)
-        return d
+        return crypto_box_afternm(okay, b"\x00" * 24, self.box_secret)
 
     def clean(self, new_ephemeral_key=None):
-        super(SHSServerCrypto, self).clean(new_ephemeral_key=new_ephemeral_key)
+        super().clean(new_ephemeral_key=new_ephemeral_key)
         self.hello = None
         self.b_alice = None
 
@@ -120,19 +144,29 @@ class SHSServerCrypto(SHSCryptoBase):
 class SHSClientCrypto(SHSCryptoBase):
     """An object that encapsulates all the SHS client-side crypto.
 
-    :param local_key: the keypair used by the client (:class:`nacl.public.PrivateKey` object)
-    :param server_pub_key: the server's public key (``byte`` string)
-    :param ephemeral_key: a fresh local :class:`nacl.public.PrivateKey`
-    :param application_key: the unique application key (``byte`` string), defaults to SSB's
+    :param local_key: the keypair used by the client
+    :param server_pub_key: the server's public key
+    :param ephemeral_key: a fresh local private key
+    :param application_key: the unique application key, defaults to SSB's
     """
 
-    def __init__(self, local_key, server_pub_key, ephemeral_key, application_key=None):
-        super(SHSClientCrypto, self).__init__(local_key, ephemeral_key, application_key)
+    def __init__(
+        self,
+        local_key: PrivateKey,
+        server_pub_key: bytes,
+        ephemeral_key: PrivateKey,
+        application_key: Optional[bytes] = None,
+    ):
+        super().__init__(local_key, ephemeral_key, application_key)
         self.remote_pub_key = VerifyKey(server_pub_key)
+        self.b_alice = None
+        self.a_bob = None
+        self.hello = None
+        self.box_secret = None
 
     def verify_server_challenge(self, data):
         """Verify the correctness of challenge sent from the server."""
-        assert super(SHSClientCrypto, self).verify_challenge(data)
+        assert super().verify_challenge(data)
         curve_pkey = self.remote_pub_key.to_curve25519_public_key()
 
         # a_bob is (a * B)
@@ -168,8 +202,8 @@ class SHSClientCrypto(SHSCryptoBase):
         try:
             # let's use the box secret to unbox our encrypted message
             signature = crypto_box_open_afternm(data, nonce, self.box_secret)
-        except CryptoError:
-            raise SHSError("Error decrypting server acceptance message")
+        except CryptoError as exc:
+            raise SHSError("Error decrypting server acceptance message") from exc
 
         # we should have received sign(B)[K | H | hash(a * b)]
         # let's see if that signature can verify the reconstructed data on our side
@@ -177,6 +211,6 @@ class SHSClientCrypto(SHSCryptoBase):
         return True
 
     def clean(self, new_ephemeral_key=None):
-        super(SHSClientCrypto, self).clean(new_ephemeral_key=new_ephemeral_key)
+        super().clean(new_ephemeral_key=new_ephemeral_key)
         self.a_bob = None
         self.b_alice = None

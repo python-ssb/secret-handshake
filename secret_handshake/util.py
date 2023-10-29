@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""Utility functions"""
 
 import struct
 
@@ -26,11 +27,16 @@ MAX_NONCE = 8 * NONCE_SIZE
 
 
 def inc_nonce(nonce):
+    """Increment nonce"""
+
     num = bytes_to_long(nonce) + 1
+
     if num > 2**MAX_NONCE:
         num = 0
+
     bnum = long_to_bytes(num)
     bnum = b"\x00" * (NONCE_SIZE - len(bnum)) + bnum
+
     return bnum
 
 
@@ -44,6 +50,8 @@ def split_chunks(seq, n):
 
 # Stolen from PyCypto (Public Domain)
 def b(s):
+    """Shorthand for s.encode("latin-1")"""
+
     return s.encode("latin-1")  # utf-8 would cause some side-effects we don't want
 
 
@@ -61,8 +69,8 @@ def long_to_bytes(n, blocksize=0):
         s = pack(">I", n & 0xFFFFFFFF) + s
         n = n >> 32
     # strip off leading zeros
-    for i in range(len(s)):
-        if s[i] != b("\000")[0]:
+    for i, c in enumerate(s):
+        if c != b("\000")[0]:
             break
     else:
         # only happens when n == 0

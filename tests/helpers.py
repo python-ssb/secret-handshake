@@ -26,8 +26,9 @@ from io import BytesIO
 class AsyncBuffer(BytesIO):
     """Just a BytesIO with an async read method."""
 
-    async def read(self, n=None):
-        v = super(AsyncBuffer, self).read(n)
+    async def read(self, n=None):  # pylint: disable=invalid-overridden-method
+        v = super().read(n)
+
         return v
 
     readexactly = read

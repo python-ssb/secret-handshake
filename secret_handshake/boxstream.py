@@ -1,5 +1,8 @@
-import struct
+"""Box stream utilities"""
+
 from asyncio import IncompleteReadError
+import struct
+from typing import Tuple
 
 from nacl.secret import SecretBox
 
@@ -10,11 +13,9 @@ MAX_SEGMENT_SIZE = 4 * 1024
 TERMINATION_HEADER = b"\x00" * 18
 
 
-def get_stream_pair(reader, writer, **kwargs):
-    """Return a tuple with `(unbox_stream, box_stream)` (reader/writer).
+def get_stream_pair(reader, writer, **kwargs) -> Tuple["UnboxStream", "BoxStream"]:
+    """Create a new duplex box stream"""
 
-    :return: (:class:`secret_handshake.boxstream.UnboxStream`,
-              :class:`secret_handshake.boxstream.BoxStream`)"""
     box_args = {
         "key": kwargs["encrypt_key"],
         "nonce": kwargs["encrypt_nonce"],
@@ -26,7 +27,9 @@ def get_stream_pair(reader, writer, **kwargs):
     return UnboxStream(reader, **unbox_args), BoxStream(writer, **box_args)
 
 
-class UnboxStream(object):
+class UnboxStream:
+    """Unboxing stream"""
+
     def __init__(self, reader, key, nonce):
         self.reader = reader
         self.key = key
@@ -34,6 +37,8 @@ class UnboxStream(object):
         self.closed = False
 
     async def read(self):
+        """Read data from the stream"""
+
         try:
             data = await self.reader.readexactly(HEADER_LENGTH)
         except IncompleteReadError:
@@ -70,7 +75,9 @@ class UnboxStream(object):
         return data
 
 
-class BoxStream(object):
+class BoxStream:
+    """Box stream"""
+
     def __init__(self, writer, key, nonce):
         self.writer = writer
         self.key = key
@@ -78,6 +85,8 @@ class BoxStream(object):
         self.nonce = nonce
 
     def write(self, data):
+        """Write data to the box stream"""
+
         for chunk in split_chunks(data, MAX_SEGMENT_SIZE):
             body = self.box.encrypt(chunk, inc_nonce(self.nonce))[24:]
             header = struct.pack(">H", len(body) - 16) + body[:16]
@@ -89,4 +98,6 @@ class BoxStream(object):
             self.writer.write(body[16:])
 
     def close(self):
+        """Close the box stream"""
+
         self.writer.write(self.box.encrypt(b"\x00" * 18, self.nonce)[24:])

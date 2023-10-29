@@ -22,9 +22,9 @@
 
 import hashlib
 
-import pytest
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
+import pytest
 
 from secret_handshake.crypto import SHSClientCrypto, SHSServerCrypto
 

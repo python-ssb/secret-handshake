@@ -20,11 +20,11 @@
 
 """Tests for the networking components"""
 
-import os
 from asyncio import Event, wait_for
+import os
 
-import pytest
 from nacl.signing import SigningKey
+import pytest
 
 from secret_handshake import SHSClient, SHSServer
 

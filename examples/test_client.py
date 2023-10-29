@@ -1,11 +1,11 @@
 """Example SHS client"""
 
-import os
 from asyncio import get_event_loop
 from base64 import b64decode
+import os
 
-import yaml
 from nacl.signing import SigningKey
+import yaml
 
 from secret_handshake import SHSClient
 

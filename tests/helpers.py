@@ -42,7 +42,10 @@ class AsyncBuffer(BytesIO):
 
 async def async_comprehend(generator):
     """Emulate ``[elem async for elem in generator]``."""
+
     results = []
+
     async for msg in generator:
         results.append(msg)
+
     return results

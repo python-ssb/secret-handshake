@@ -36,7 +36,7 @@ CLIENT_EPH_KEY_SEED = b"u8\xd0\xe3\x85d_Pz\x0c\xf5\xfd\x15\xce2p#\xb0\xf0\x9f\xe
 
 
 @pytest.fixture
-def server():
+def server() -> SHSServerCrypto:
     """A testing SHS server"""
 
     server_key = SigningKey(SERVER_KEY_SEED)
@@ -46,7 +46,7 @@ def server():
 
 
 @pytest.fixture
-def client():
+def client() -> SHSClientCrypto:
     """A testing SHS client"""
 
     client_key = SigningKey(CLIENT_KEY_SEED)
@@ -90,7 +90,7 @@ CLIENT_ENCRYPT_NONCE = b"S\\\x06\x8d\xe5\xeb&*\xb8\x0bp\xb3Z\x8e\\\x85\x14\xaa\x
 CLIENT_DECRYPT_NONCE = b"d\xe8\xccD\xec\xb9E\xbb\xaa\xa7\x7f\xe38\x15\x16\xef\xca\xd22u\x1d\xfe<\xe7"
 
 
-def test_handshake(client, server):  # pylint: disable=redefined-outer-name
+def test_handshake(client: SHSClientCrypto, server: SHSServerCrypto) -> None:  # pylint: disable=redefined-outer-name
     """Test the handshake procedure"""
 
     client_challenge = client.generate_challenge()

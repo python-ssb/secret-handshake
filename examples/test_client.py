@@ -13,7 +13,7 @@ with open(os.path.expanduser("~/.ssb/secret"), encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
 
-async def main():
+async def main() -> None:
     """Main function to run"""
 
     server_pub_key = b64decode(config["public"][:-8])

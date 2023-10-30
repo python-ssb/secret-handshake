@@ -38,8 +38,9 @@ MESSAGE_CLOSED = b"\xb1\x14hU'\xb5M\xa6\"\x03\x9duy\xa1\xd4evW,\xdcE\x18\xe4+ C4
 
 
 @pytest.mark.asyncio
-async def test_boxstream():
+async def test_boxstream() -> None:
     """Test stream boxing"""
+
     buffer = AsyncBuffer()
     box_stream = BoxStream(buffer, CLIENT_ENCRYPT_KEY, CLIENT_ENCRYPT_NONCE)
     box_stream.write(b"foo")
@@ -63,7 +64,7 @@ async def test_boxstream():
 
 
 @pytest.mark.asyncio
-async def test_unboxstream():
+async def test_unboxstream() -> None:
     """Test stream unboxing"""
 
     buffer = AsyncBuffer(MESSAGE_1 + MESSAGE_2 + MESSAGE_3 + MESSAGE_CLOSED)
@@ -76,7 +77,7 @@ async def test_unboxstream():
 
 
 @pytest.mark.asyncio
-async def test_long_packets():
+async def test_long_packets() -> None:
     """Test for receiving long packets"""
 
     data_size = 6 * 1024

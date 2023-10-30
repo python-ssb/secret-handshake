@@ -20,27 +20,34 @@
 
 """Helper utilities for testing"""
 
+from asyncio import StreamReader, StreamWriter
 from io import BytesIO
+from typing import AsyncIterable, List, Optional, TypeVar
+
+T = TypeVar("T")
 
 
-class AsyncBuffer(BytesIO):
+class AsyncBuffer(BytesIO, StreamReader, StreamWriter):  # type: ignore[misc]
     """Just a BytesIO with an async read method."""
 
-    async def read(self, n=None):  # pylint: disable=invalid-overridden-method
+    async def read(  # type: ignore[override] # pylint: disable=invalid-overridden-method
+        self, n: Optional[int] = None
+    ) -> Optional[bytes]:
         v = super().read(n)
 
         return v
 
-    readexactly = read
+    readexactly = read  # type: ignore[assignment]
 
-    def append(self, data):
+    def append(self, data: bytes) -> None:
         """Append data to the buffer without changing the current position."""
+
         pos = self.tell()
         self.write(data)
         self.seek(pos)
 
 
-async def async_comprehend(generator):
+async def async_comprehend(generator: AsyncIterable[T]) -> List[T]:
     """Emulate ``[elem async for elem in generator]``."""
 
     results = []

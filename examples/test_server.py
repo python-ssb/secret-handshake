@@ -8,7 +8,7 @@ from nacl.signing import SigningKey
 from secret_handshake import SHSServer
 
 with open(os.path.expanduser('~/.ssb/secret')) as f:
-    config = yaml.load(f)
+    config = yaml.safe_load(f)
 
 
 async def _on_connect(conn):

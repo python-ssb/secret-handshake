@@ -20,34 +20,9 @@
 
 
 import struct
-from io import BytesIO
 
 NONCE_SIZE = 24
 MAX_NONCE = 8 * NONCE_SIZE
-
-
-class AsyncBuffer(BytesIO):
-    """Just a BytesIO with an async read method."""
-
-    async def read(self, n=None):
-        v = super(AsyncBuffer, self).read(n)
-        return v
-
-    readexactly = read
-
-    def append(self, data):
-        """Append data to the buffer without changing the current position."""
-        pos = self.tell()
-        self.write(data)
-        self.seek(pos)
-
-
-async def async_comprehend(generator):
-    """Emulate ``[elem async for elem in generator]``."""
-    results = []
-    async for msg in generator:
-        results.append(msg)
-    return results
 
 
 def inc_nonce(nonce):

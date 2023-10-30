@@ -24,7 +24,7 @@ from asyncio import Event, wait_for
 import pytest
 from nacl.signing import SigningKey
 
-from secret_handshake.util import AsyncBuffer
+from .helpers import AsyncBuffer
 
 
 class DummyCrypto(object):

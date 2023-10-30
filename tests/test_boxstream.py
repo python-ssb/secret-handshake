@@ -22,8 +22,8 @@
 import pytest
 
 from secret_handshake.boxstream import HEADER_LENGTH, BoxStream, UnboxStream
-from secret_handshake.util import AsyncBuffer, async_comprehend
 
+from .helpers import AsyncBuffer, async_comprehend
 from .test_crypto import CLIENT_ENCRYPT_KEY, CLIENT_ENCRYPT_NONCE
 
 MESSAGE_1 = (

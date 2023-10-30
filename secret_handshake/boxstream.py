@@ -1,7 +1,6 @@
 import struct
 from asyncio import IncompleteReadError
 
-from async_generator import async_generator, yield_
 from nacl.secret import SecretBox
 
 from .util import inc_nonce, split_chunks
@@ -59,13 +58,16 @@ class UnboxStream(object):
         self.nonce = inc_nonce(inc_nonce(self.nonce))
         return body
 
-    @async_generator
-    async def __aiter__(self):
-        while True:
-            data = await self.read()
-            if data is None:
-                return
-            await yield_(data)
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        data = await self.read()
+
+        if data is None:
+            raise StopAsyncIteration()
+
+        return data
 
 
 class BoxStream(object):

@@ -21,8 +21,6 @@
 
 import asyncio
 
-from async_generator import async_generator, yield_
-
 from .boxstream import get_stream_pair
 from .crypto import SHSClientCrypto, SHSServerCrypto
 
@@ -48,10 +46,16 @@ class SHSDuplexStream(object):
         self.read_stream.close()
         self.is_connected = False
 
-    @async_generator
-    async def __aiter__(self):
-        async for msg in self.read_stream:
-            await yield_(msg)
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        msg = await self.read()
+
+        if msg is None:
+            raise StopAsyncIteration()
+
+        return msg
 
 
 class SHSEndpoint(object):

@@ -38,6 +38,19 @@ version_provider = "poetry"
 update_changelog_on_bump = true
 major_version_zero = true
 
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 91
+omit = ["examples/*"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=. --no-cov-on-fail"
+ignore = "examples"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -64,6 +64,7 @@ max-line-length = 120
 
 [tool.pytest.ini_options]
 addopts = "--cov=. --no-cov-on-fail"
+asyncio_mode = "auto"
 ignore = "examples"
 
 [build-system]

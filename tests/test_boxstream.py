@@ -20,8 +20,6 @@
 
 """Tests for the box stream"""
 
-import pytest
-
 from secret_handshake.boxstream import HEADER_LENGTH, BoxStream, UnboxStream
 
 from .helpers import AsyncBuffer, async_comprehend
@@ -37,7 +35,6 @@ MESSAGE_3 = (
 MESSAGE_CLOSED = b"\xb1\x14hU'\xb5M\xa6\"\x03\x9duy\xa1\xd4evW,\xdcE\x18\xe4+ C4\xe8h\x96\xed\xc5\x94\x80"
 
 
-@pytest.mark.asyncio
 async def test_boxstream() -> None:
     """Test stream boxing"""
 
@@ -63,7 +60,6 @@ async def test_boxstream() -> None:
     assert await buffer.read() == MESSAGE_CLOSED
 
 
-@pytest.mark.asyncio
 async def test_unboxstream() -> None:
     """Test stream unboxing"""
 
@@ -76,7 +72,6 @@ async def test_unboxstream() -> None:
     assert unbox_stream.closed
 
 
-@pytest.mark.asyncio
 async def test_long_packets() -> None:
     """Test for receiving long packets"""
 

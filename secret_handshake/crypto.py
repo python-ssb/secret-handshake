@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+#
 # Copyright (c) 2017 PySecretHandshake contributors (see AUTHORS for more details)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

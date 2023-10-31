@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+#
+# SPDX-Copyright-Text: © 2017 PySecretHandshake contributors (see AUTHORS for more details)
 [tool.poetry]
 name = "secret-handshake"
 version = "0.1.0"
@@ -27,6 +30,7 @@ black = "^23.10.1"
 pylint = "^3.0.2"
 mypy = "^1.6.1"
 types-pyyaml = "^6.0.12.12"
+reuse = "^2.1.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.2.6"

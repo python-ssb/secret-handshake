@@ -43,3 +43,9 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
+      - id: reuse
+        name: reuse
+        entry: poetry run reuse
+        args: ["lint"]
+        language: system
+        pass_filenames: false

@@ -23,10 +23,33 @@
 """Tests for utility functions"""
 
 import math
+from types import GeneratorType
+from typing import List, Sequence, TypeVar
 
 import pytest
 
-from secret_handshake.util import bytes_to_long, long_to_bytes
+from secret_handshake.util import bytes_to_long, long_to_bytes, split_chunks
+
+T = TypeVar("T")
+
+
+def test_split_chunks_is_generator() -> None:
+    """Test if split_chunks returns a generator"""
+
+    assert isinstance(split_chunks([], 1), GeneratorType)
+
+
+@pytest.mark.parametrize(
+    "in_,chunksize,out",
+    (
+        (b"asdfg", 2, [b"as", b"df", b"g"]),
+        (b"asdfgh", 3, [b"asd", b"fgh"]),
+    ),
+)
+def test_split_chunks(in_: Sequence[T], chunksize: int, out: List[Sequence[T]]) -> None:
+    """Test if split_chunks splits the input into equal chunks"""
+
+    assert list(split_chunks(in_, chunksize)) == out
 
 
 @pytest.mark.parametrize(

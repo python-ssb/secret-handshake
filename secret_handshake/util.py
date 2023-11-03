@@ -54,13 +54,6 @@ def split_chunks(seq: Sequence[T], n: int) -> Generator[Sequence[T], None, None]
         seq = seq[n:]
 
 
-# Stolen from PyCypto (Public Domain)
-def b(s: str) -> bytes:
-    """Shorthand for s.encode("latin-1")"""
-
-    return s.encode("latin-1")  # utf-8 would cause some side-effects we don't want
-
-
 def long_to_bytes(n: int, blocksize: int = 0) -> bytes:
     """Convert a long integer to a byte string.
 
@@ -69,7 +62,7 @@ def long_to_bytes(n: int, blocksize: int = 0) -> bytes:
     """
 
     # after much testing, this algorithm was deemed to be the fastest
-    s = b("")
+    s = b""
     pack = struct.pack
 
     while n > 0:
@@ -78,11 +71,11 @@ def long_to_bytes(n: int, blocksize: int = 0) -> bytes:
 
     # strip off leading zeros
     for i, c in enumerate(s):
-        if c != b("\000")[0]:
+        if c != 0:
             break
     else:
         # only happens when n == 0
-        s = b("\000")
+        s = b"\x00"
         i = 0
 
     s = s[i:]
@@ -90,7 +83,7 @@ def long_to_bytes(n: int, blocksize: int = 0) -> bytes:
     # add back some pad bytes.  this could be done more efficiently w.r.t. the
     # de-padding being done above, but sigh...
     if blocksize > 0 and len(s) % blocksize:
-        s = (blocksize - len(s) % blocksize) * b("\000") + s
+        s = (blocksize - len(s) % blocksize) * b"\x00" + s
 
     return s
 
@@ -107,7 +100,7 @@ def bytes_to_long(s: bytes) -> int:
 
     if length % 4:
         extra = 4 - length % 4
-        s = b("\000") * extra + s
+        s = b"\x00" * extra + s
         length = length + extra
 
     for i in range(0, length, 4):

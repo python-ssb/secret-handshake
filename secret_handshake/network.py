@@ -91,7 +91,7 @@ class SHSEndpoint:
 
         self._on_connect = cb
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> None:  # pragma: no cover
         """Disconnect the endpoint"""
 
         raise NotImplementedError

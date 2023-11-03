@@ -28,9 +28,19 @@ from typing import List, Sequence, TypeVar
 
 import pytest
 
-from secret_handshake.util import bytes_to_long, long_to_bytes, split_chunks
+from secret_handshake.util import bytes_to_long, inc_nonce, long_to_bytes, split_chunks
 
 T = TypeVar("T")
+
+
+@pytest.mark.parametrize("in_,out", ((b"\x00\x00\x00\x00", b"\x00" * 23 + b"\x01"),))
+def test_inc_nonce(in_: bytes, out: bytes) -> None:
+    """Test the inc_nonce function"""
+
+    result = inc_nonce(in_)
+
+    assert len(result) == 24
+    assert result == out
 
 
 def test_split_chunks_is_generator() -> None:

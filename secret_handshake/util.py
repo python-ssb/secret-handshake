@@ -44,14 +44,17 @@ def inc_nonce(nonce: bytes) -> bytes:
     return bnum
 
 
-def split_chunks(seq: Sequence[T], n: int) -> Generator[Sequence[T], None, None]:
+def split_chunks(seq: Sequence[T], chunk_size: int) -> Generator[Sequence[T], None, None]:
     """Split sequence in equal-sized chunks.
 
     The last chunk is not padded."""
 
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than zero")
+
     while seq:
-        yield seq[:n]
-        seq = seq[n:]
+        yield seq[:chunk_size]
+        seq = seq[chunk_size:]
 
 
 def long_to_bytes(n: int, blocksize: int = 0) -> bytes:

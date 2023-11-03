@@ -49,6 +49,16 @@ def test_split_chunks_is_generator() -> None:
     assert isinstance(split_chunks([], 1), GeneratorType)
 
 
+@pytest.mark.parametrize("size", (-123, -1, 0))
+def test_nonpositive_chunk_size(size: int) -> None:
+    """Test if split_chunks() with non-positive chunk sizes raise an error"""
+
+    with pytest.raises(ValueError) as ctx:
+        list(split_chunks(b"", size))
+
+    assert str(ctx.value) == "chunk_size must be greater than zero"
+
+
 @pytest.mark.parametrize(
     "in_,chunksize,out",
     (

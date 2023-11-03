@@ -33,7 +33,13 @@ from secret_handshake.util import bytes_to_long, inc_nonce, long_to_bytes, split
 T = TypeVar("T")
 
 
-@pytest.mark.parametrize("in_,out", ((b"\x00\x00\x00\x00", b"\x00" * 23 + b"\x01"),))
+@pytest.mark.parametrize(
+    "in_,out",
+    (
+        (b"\x00\x00\x00\x00", b"\x00" * 23 + b"\x01"),
+        (b"\xff" * 24, b"\x00" * 24),
+    ),
+)
 def test_inc_nonce(in_: bytes, out: bytes) -> None:
     """Test the inc_nonce function"""
 

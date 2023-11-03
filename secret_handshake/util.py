@@ -35,7 +35,7 @@ def inc_nonce(nonce: bytes) -> bytes:
 
     num = bytes_to_long(nonce) + 1
 
-    if num > 2**MAX_NONCE:
+    if num > 2**MAX_NONCE - 1:
         num = 0
 
     bnum = long_to_bytes(num)

@@ -53,6 +53,7 @@ def get_stream_pair(  # pylint: disable=too-many-arguments
     decrypt_nonce: bytes,
     encrypt_key: bytes,
     encrypt_nonce: bytes,
+    # We have kwargs here to devour any extra parameters we get, e.g. from the output of SHSCryptoBase.get_box_keys()
     **kwargs: Any,
 ) -> Tuple["UnboxStream", "BoxStream"]:
     """Create a new duplex box stream"""

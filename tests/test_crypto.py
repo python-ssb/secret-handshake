@@ -23,12 +23,15 @@
 """Tests for the crypto components"""
 
 import hashlib
+from typing import Literal
 
+from nacl.exceptions import CryptoError
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import pytest
+from pytest_mock import MockerFixture
 
-from secret_handshake.crypto import SHSClientCrypto, SHSServerCrypto
+from secret_handshake.crypto import SHSClientCrypto, SHSError, SHSServerCrypto
 
 APP_KEY = hashlib.sha256(b"app_key").digest()
 SERVER_KEY_SEED = b"\xcaw\x01\xc2cQ\xfd\x94\x9f\x14\x84\x0c0<l\xd8\xe4\xf5>\x12\\\x96\xcd\x9b\x0c\x02z&\x96!\xe0\xa2"
@@ -48,14 +51,22 @@ def server() -> SHSServerCrypto:
 
 
 @pytest.fixture
-def client() -> SHSClientCrypto:
+def client(request: pytest.FixtureRequest) -> SHSClientCrypto:
     """A testing SHS client"""
+
+    app_key = None
+
+    for marker in request.node.iter_markers(name="client_app_key"):
+        app_key = marker.args[0]
+
+    if app_key is None:
+        app_key = APP_KEY
 
     client_key = SigningKey(CLIENT_KEY_SEED)
     server_key = SigningKey(SERVER_KEY_SEED)
     client_eph_key = PrivateKey(CLIENT_EPH_KEY_SEED)
 
-    return SHSClientCrypto(client_key, bytes(server_key.verify_key), client_eph_key, application_key=APP_KEY)
+    return SHSClientCrypto(client_key, bytes(server_key.verify_key), client_eph_key, application_key=app_key)
 
 
 CLIENT_CHALLENGE = (
@@ -130,3 +141,67 @@ def test_handshake(client: SHSClientCrypto, server: SHSServerCrypto) -> None:  #
     assert client_keys["shared_secret"] == server_keys["shared_secret"]
     assert client_keys["encrypt_key"] == server_keys["decrypt_key"]
     assert client_keys["encrypt_nonce"] == server_keys["decrypt_nonce"]
+
+
+@pytest.mark.client_app_key(b"a" * 32)
+def test_verify_challenge_different_app_keys(
+    client: SHSClientCrypto, server: SHSServerCrypto  # pylint: disable=redefined-outer-name
+) -> None:
+    """Test challenge verification when the application keys of the client and server don’t match"""
+
+    challenge = client.generate_challenge()
+    assert not server.verify_challenge(challenge)
+
+
+def test_verify_challenge(
+    client: SHSClientCrypto, server: SHSServerCrypto  # pylint: disable=redefined-outer-name
+) -> None:
+    """Test challenge verification when the application keys of the client and server match"""
+
+    challenge = client.generate_challenge()
+    assert server.verify_challenge(challenge)
+
+
+@pytest.mark.parametrize("type_", ("server", "client"))
+@pytest.mark.parametrize("provide_key", (True, False))
+def test_clean(
+    type_: Literal["client", "server"], provide_key: bool, request: pytest.FixtureRequest, mocker: MockerFixture
+) -> None:
+    """Test the clean() method"""
+
+    if type_ == "server":
+        actor = request.getfixturevalue("server")
+    elif type_ == "client":  # pragma: no branch
+        actor = request.getfixturevalue("client")
+
+    mocked_private_key = mocker.patch("secret_handshake.crypto.PrivateKey")
+    mocked_private_key.generate = mocker.MagicMock(return_value=PrivateKey(b"g" * 32))
+
+    new_key = PrivateKey(b"p" * 32) if provide_key else None
+    actor.clean(new_ephemeral_key=new_key)
+
+    assert actor.shared_secret is None
+    assert actor.shared_hash is None
+    assert actor.remote_ephemeral_key is None
+    assert isinstance(actor.local_ephemeral_key, PrivateKey)
+
+    if provide_key:
+        assert actor.local_ephemeral_key == new_key
+    else:
+        assert actor.local_ephemeral_key.encode() == b"g" * 32
+
+
+def test_failing_server_accept(
+    client: SHSClientCrypto, server: SHSServerCrypto, mocker: MockerFixture  # pylint: disable=redefined-outer-name
+) -> None:
+    """Test if verify_server_accept raises the correct exception type"""
+
+    server.verify_challenge(client.generate_challenge())
+    client.verify_server_challenge(server.generate_challenge())
+    server.verify_client_auth(client.generate_client_auth())
+    server_accept = server.generate_accept()
+
+    mocker.patch("secret_handshake.crypto.crypto_box_open_afternm", side_effect=CryptoError())
+
+    with pytest.raises(SHSError):
+        client.verify_server_accept(server_accept)

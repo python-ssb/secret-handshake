@@ -27,7 +27,7 @@ from typing import AsyncIterator, Awaitable, Callable, List, Optional
 
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
-from typing_extensions import Self
+from typing_extensions import Self, deprecated
 
 from .boxstream import BoxStream, UnboxStream, get_stream_pair
 from .crypto import SHSClientCrypto, SHSCryptoBase, SHSServerCrypto
@@ -91,10 +91,16 @@ class SHSEndpoint:
 
         self._on_connect = cb
 
-    def disconnect(self) -> None:  # pragma: no cover
+    def close(self) -> None:  # pragma: no cover
         """Disconnect the endpoint"""
 
-        raise NotImplementedError
+        raise NotImplementedError()
+
+    @deprecated("Use close instead")
+    def disconnect(self) -> None:
+        """Disconnect the endpoint"""
+
+        self.close()
 
 
 class SHSServer(SHSEndpoint):
@@ -145,9 +151,13 @@ class SHSServer(SHSEndpoint):
 
         await start_server(self.handle_connection, self.host, self.port)
 
-    def disconnect(self) -> None:
+    def close(self) -> None:
         for connection in self.connections:
             connection.close()
+
+    @deprecated("Use close instead")
+    def disconnect(self) -> None:
+        self.close()
 
 
 class SHSServerConnection(SHSDuplexStream):
@@ -221,6 +231,3 @@ class SHSClient(SHSDuplexStream, SHSEndpoint):
 
         if self._on_connect:
             await self._on_connect(self)
-
-    def disconnect(self) -> None:
-        self.close()

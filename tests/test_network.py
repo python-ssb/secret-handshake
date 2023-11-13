@@ -145,7 +145,7 @@ async def test_client(mocker: MockerFixture) -> None:
     await client.open()
     reader.append(b"TEST")
     assert (await client.read()) == b"TEST"
-    client.disconnect()
+    client.close()
 
 
 @pytest.mark.asyncio
@@ -155,7 +155,7 @@ async def test_server(mocker: MockerFixture) -> None:
     resolve = Event()
 
     async def _on_connect(_: Any) -> None:
-        server.disconnect()
+        server.close()
         resolve.set()
 
     _, _, _create_mock_server = _server_stream_mocker()

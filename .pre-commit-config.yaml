@@ -32,6 +32,7 @@ repos:
         require_serial: true
       - id: isort
         name: isort
+        args: ["--check", "--diff"]
         entry: poetry run isort
         language: system
         require_serial: true

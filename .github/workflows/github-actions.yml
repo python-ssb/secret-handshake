@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MIT
+#
+# SPDX-Copyright-Text: © 2017 PySecretHandshake contributors (see AUTHORS for more details)
+name: CI
+on: pull_request
+
+jobs:
+  CI:
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: abatilo/actions-poetry@v2
+      - name: Install dependencies
+        run: poetry install
+      - name: Style check with black
+        run: poetry run black --check --diff secret_handshake tests examples
+      - name: Import ordering check with isort
+        run: poetry run isort --check --diff secret_handshake tests examples
+      - name: Static checking with Pylint
+        run: poetry run pylint secret_handshake tests examples
+      - name: Type checking with MyPy
+        run: poetry run mypy --strict secret_handshake tests examples
+      - name: REUSE compatibility test
+        run: poetry run reuse lint
+      - name: Unit tests
+        run: poetry run pytest tests

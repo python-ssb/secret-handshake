@@ -31,7 +31,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from secret_handshake import SHSClient, SHSServer
-from secret_handshake.boxstream import BoxStreamKeys
+from secret_handshake.boxstream import BoxStream, BoxStreamKeys
 from secret_handshake.network import SHSClientException, SHSDuplexStream
 
 from .helpers import AsyncBuffer
@@ -176,7 +176,7 @@ def test_duplex_write(mocker: MockerFixture) -> None:
     """Test the writing capabilities of the duplex stream"""
 
     d_stream = SHSDuplexStream()
-    d_stream.write_stream = mocker.AsyncMock()
+    d_stream.write_stream = mocker.MagicMock(spec=BoxStream)
     d_stream.write(b"thing")
 
     assert d_stream.write_stream

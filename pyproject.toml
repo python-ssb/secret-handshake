@@ -69,6 +69,9 @@ max-line-length = 120
 [tool.pytest.ini_options]
 addopts = "--cov=. --no-cov-on-fail"
 asyncio_mode = "auto"
+markers = [
+    "client_app_key(k): a 32-bytes long data to use as the client application key (CAPS)",
+]
 
 [build-system]
 requires = ["poetry-core"]
